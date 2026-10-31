@@ -1,4 +1,4 @@
-# "Dinner's Ready" — horror Short (9:16, 1080×1920, 30 fps, ~32 s)
+# "Dinner's Ready" — horror Short (9:16, 1080×1920, 30 fps, 14.4 s)
 
 An original two-sentence-horror Short made in the same edit style as the
 reference ("Would you look under the bed?"): clay-look 3D cartoon characters,
@@ -10,12 +10,9 @@ end card.
 
 ## Story
 
-> Every night at seven, my mom calls me down for dinner.
-> Tonight, right on time, I heard her from the kitchen — *"Sweetie... dinner's ready!"*
-> I was halfway down the stairs when my phone buzzed. It was a text from Mom:
-> **"Stuck at work till midnight. Lock your door."**
-> So who's been cooking... in our kitchen?
-> *"Come and eat, sweetie."*
+> Mom called me down for dinner — *"Sweetie... dinner's ready!"*
+> Then my phone buzzed. Mom: **"Stuck at work till midnight."**
+> So who's in the kitchen?
 
 ## Edit style used (copied from the reference)
 
@@ -34,14 +31,14 @@ end card.
 | # | Time | Shot |
 |---|---|---|
 | 1 | 0.0 s | Bedroom, girl in bed, clock ticks to 7:00 |
-| 2 | 4.4 s | Door to the hallway creaks open, she turns to look |
-| 3 | 8.2 s | Light through the door gap, a tall shadow passes ("Sweetie... dinner's ready!") |
-| 4 | 10.7 s | Low angle on the stairs, she walks down, the phone buzzes |
-| 5 | 14.7 s | Phone close-up, Mom's text slides in, red circle + arrow |
-| 6 | 21.5 s | Peeking into the kitchen: a too-tall figure stirring a pot |
-| 7 | 24.6 s | Its head turns all the way around in stutters ("Come and eat, sweetie.") |
-| 8 | 27.4 s | Jumpscare |
-| 9 | 28.8 s | End card: girl's terrified face, the grin reflected in her eye |
+| 2 | 1.2 s | Door to the hallway creaks open, she turns to look |
+| 3 | 2.2 s | Light through the door gap, a tall shadow passes ("Sweetie... dinner's ready!") |
+| 4 | 4.3 s | Low angle on the stairs, she walks down, the phone buzzes |
+| 5 | 5.7 s | Phone close-up, Mom's text slides in, red circle + arrow |
+| 6 | 8.7 s | Peeking into the kitchen: a too-tall figure stirring a pot |
+| 7 | 9.5 s | Its head turns all the way around in stutters |
+| 8 | 11.0 s | Jumpscare |
+| 9 | 12.0 s | End card: girl's terrified face, the grin reflected in her eye |
 
 ## Rebuild
 

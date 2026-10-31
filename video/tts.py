@@ -12,14 +12,11 @@ NARRATOR = "en-US-AnaNeural"          # child narrator
 THING = "en-US-JennyNeural"           # the "mom" in the kitchen
 
 LINES = [
-    ("n1", NARRATOR, "+0%", "+0Hz", "Every night at seven, my mom calls me down for dinner."),
-    ("n2", NARRATOR, "+0%", "+0Hz", "Tonight, right on time, I heard her from the kitchen."),
-    ("m1", THING, "-25%", "-18Hz", "Sweetie... dinner's ready!"),
-    ("n3", NARRATOR, "+0%", "+0Hz", "I was halfway down the stairs, when my phone buzzed."),
-    ("n4", NARRATOR, "-5%", "+0Hz", "It was a text from Mom."),
-    ("n5", NARRATOR, "-10%", "-4Hz", "Stuck at work till midnight. Lock your door."),
-    ("n6", NARRATOR, "-12%", "-6Hz", "So who's been cooking... in our kitchen?"),
-    ("m2", THING, "-35%", "-30Hz", "Come and eat, sweetie."),
+    ("n1", NARRATOR, "+5%", "+0Hz", "Mom called me down for dinner."),
+    ("m1", THING, "-15%", "-18Hz", "Sweetie... dinner's ready!"),
+    ("n3", NARRATOR, "+5%", "+0Hz", "Then my phone buzzed."),
+    ("n5", NARRATOR, "+0%", "-4Hz", "Mom: stuck at work till midnight."),
+    ("n6", NARRATOR, "-5%", "-6Hz", "So who's in the kitchen?"),
 ]
 
 

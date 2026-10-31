@@ -456,8 +456,8 @@ const SHOTS = {
   },
   door(lt, t, d) {
     const { girl } = BED; drawClock(BED.clockTex, 7 * 60);
-    BED.hinge.rotation.y = .12 + easeOut(lt / 1.2) * .5; BED.shadowThing.visible = false;
-    const turn = smooth(.4, 1.6, lt);
+    BED.hinge.rotation.y = .12 + easeOut(lt / .6) * .5; BED.shadowThing.visible = false;
+    const turn = smooth(.05, .75, lt);
     girl.userData.head.rotation.set(.02, turn * 1.05, turn * -.08);
     setExpr(girl, 'curious', t);
     const k = easeInOut(lt / d);
@@ -476,7 +476,7 @@ const SHOTS = {
     const buzz = TL.marks.buzz - (t - lt); // local time of buzz
     // walk down from step 2 to step 5, stop at the buzz
     const walk = clamp(lt / Math.max(.1, buzz - .1));
-    const stepF = lerp(2, 5, walk), si = Math.floor(stepF), fr = stepF - si;
+    const stepF = lerp(3, 5, walk), si = Math.floor(stepF), fr = stepF - si;
     const p = stepPos(si).lerp(stepPos(si + 1), smooth(.3, 1, fr)); p.y += Math.sin(fr * Math.PI) * .12 * (walk < 1 ? 1 : 0);
     girl.position.copy(p); girl.rotation.y = 0;
     girl.userData.legs[0].position.y = .38 + (walk < 1 ? Math.max(0, Math.sin(stepF * Math.PI * 2)) * .15 : 0);
@@ -515,7 +515,7 @@ const SHOTS = {
     th.userData.arms[0].rotation.x = -.9; // stops stirring
     // head turns all the way around in creepy stutters
     const raw = clamp((lt - .4) / (d - .9));
-    const steps = 7, stepK = Math.floor(raw * steps) / steps, frac = raw * steps % 1;
+    const steps = 4, stepK = Math.floor(raw * steps) / steps, frac = raw * steps % 1;
     const turn = raw >= 1 ? 1 : stepK + smooth(.0, .35, frac) / steps;
     th.userData.head.rotation.set(0, turn * Math.PI, (1 - turn) * .12 + turn * -.18);
     const k = easeInOut(lt / d);
