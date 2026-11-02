@@ -271,13 +271,22 @@ function makeBedroom() {
   moon.castShadow = true; moon.shadow.mapSize.set(1024, 1024); moon.shadow.camera.left = -6; moon.shadow.camera.right = 6;
   moon.shadow.camera.top = 6; moon.shadow.camera.bottom = -6; s.add(moon, moon.target);
   lightsCommon(s, 0x34406a, 0x120c0c, .7);
-  spot(s, 0xaebfff, 45, V(.6, 4.2, 3.2), V(-1.2, 1.9, -3), .32, .8, true);
-  spot(s, 0xffa860, 25, V(-3.6, 2.6, -1.0), V(-1.2, 2.2, -3), .5, .8, false);
+  const front = spot(s, 0xaebfff, 45, V(.6, 4.2, 3.2), V(-1.2, 1.9, -3), .32, .8, true);
+  const warm = spot(s, 0xffa860, 25, V(-3.6, 2.6, -1.0), V(-1.2, 2.2, -3), .5, .8, false);
   // toys on the floor for life
   sph(.3, clay(0xd8263a), 1.0, .3, .8, s); rbox(.5, .5, .5, .06, clay(0x3a7bd5), .2, .25, 1.6, s).rotation.y = .5;
   const girl = makeGirl(); girl.scale.setScalar(.52); girl.position.set(-1.2, .78, -3.0); s.add(girl);
   girl.userData.legs.forEach(l => l.visible = false);
-  return { scene: s, girl, clockTex, hinge, shadowThing, hallLamp, doorSpot, lamp, shade };
+  // episode 2: the "babysitter" standing beside the bed, and a phone in the girl's hand
+  const thing = makeThing(); thing.scale.setScalar(.62); thing.position.set(.8, 0, -1.4); thing.rotation.y = -2.26; s.add(thing);
+  const faceLight = point(s, 0xc8d4ff, 0, V(.6, 3.0, .2), 3);
+  spot(s, 0x6f86c8, 30, V(3.5, 4.5, -4.5), V(.8, 2.2, -1.4), .35, .7, false);
+  const phone = new THREE.Group(); girl.userData.arms[0].add(phone); phone.position.set(.05, -.95, .22);
+  rbox(.32, .56, .05, .04, gloss(0x111318), 0, 0, 0, phone);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(.28, .5), glow(0x9fb8ff)); scr.position.z = .03; scr.rotation.y = Math.PI; phone.add(scr);
+  phone.rotation.x = -1.0;
+  const phoneLight = point(s, 0x9fb8ff, 0, V(0, 0, 0), 2.5);
+  return { scene: s, girl, clockTex, hinge, shadowThing, hallLamp, doorSpot, lamp, shade, front, warm, thing, faceLight, phone, scr, phoneLight };
 }
 
 function drawClock(tex, minutes) {
@@ -344,9 +353,9 @@ function drawPhone(tex, t, notifyT) {
   g.fillStyle = bg; g.fillRect(0, 0, w, h);
   g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(w * .75, h * .8, 260, 0, 7); g.fill();
   g.fillStyle = '#fff'; g.textAlign = 'center';
-  g.font = '600 34px Mont, sans-serif'; g.fillText('Friday, October 31', w / 2, 180);
-  g.font = '800 170px Mont, sans-serif'; g.fillText('7:00', w / 2, 350);
-  g.font = '600 26px Mont, sans-serif'; g.fillText('100%', w - 70, 50); g.textAlign = 'left'; g.fillText('7:00', 40, 50);
+  g.font = '600 34px Mont, sans-serif'; g.fillText(TL.text.phone.date, w / 2, 180);
+  g.font = '800 170px Mont, sans-serif'; g.fillText(TL.text.phone.time, w / 2, 350);
+  g.font = '600 26px Mont, sans-serif'; g.fillText('100%', w - 70, 50); g.textAlign = 'left'; g.fillText(TL.text.phone.time, 40, 50);
   const k = easeOut((t - notifyT) / .35);
   if (t > notifyT) {
     const y = lerp(-220, 430, k);
@@ -354,11 +363,11 @@ function drawPhone(tex, t, notifyT) {
     g.fillStyle = 'rgba(245,245,250,.95)'; roundRect(g, 26, y, w - 52, 250, 34); g.fill();
     g.fillStyle = '#34c759'; roundRect(g, 52, y + 30, 64, 64, 16); g.fill();
     g.fillStyle = '#fff'; g.font = '800 40px Mont'; g.textAlign = 'center'; g.fillText('\u{1F4AC}', 84, y + 76);
-    g.textAlign = 'left'; g.fillStyle = '#111'; g.font = '800 36px Mont, "Noto Color Emoji"'; g.fillText('Mom ❤️', 136, y + 74);
+    g.textAlign = 'left'; g.fillStyle = '#111'; g.font = '800 36px Mont, "Noto Color Emoji"'; g.fillText(TL.text.phone.from, 136, y + 74);
     g.fillStyle = '#777'; g.font = '600 28px Mont'; g.textAlign = 'right'; g.fillText('now', w - 60, y + 72); g.textAlign = 'left';
     g.fillStyle = '#111'; g.font = '700 34px Mont, "Noto Color Emoji"';
-    g.fillText('Stuck at work till midnight.', 56, y + 150);
-    g.fillText('Lock your door. \u{1F629}', 56, y + 200);
+    g.fillText(TL.text.phone.l1, 56, y + 150);
+    g.fillText(TL.text.phone.l2, 56, y + 200);
     g.globalAlpha = 1;
   }
   tex.needsUpdate = true;
@@ -547,7 +556,105 @@ const SHOTS = {
     girl.updateMatrixWorld(true);
     ann = { p: girl.userData.eyes[1].localToWorld(V(0, 0, .1)), r: 120, t0: TL.marks.endcard + .35, arrow: 'bl2' };
   },
+
+  // ======================= episode 2: the babysitter
+  nursery(lt, t, d) {
+    const { girl, thing } = BED; bedEp2(t);
+    girl.userData.head.rotation.set(.05, .25 + Math.sin(t * .8) * .04, 0);
+    girl.userData.arms.forEach(a => a.rotation.set(-.5, 0, 0));
+    setExpr(girl, 'calm', t);
+    // it smooths the blanket, head bowed toward her
+    const a = thing.userData.arms[1]; a.rotation.set(-1.15 + Math.sin(t * 2.2) * .08, 0, .1 + Math.sin(t * 2.2) * .15);
+    thing.userData.head.rotation.set(.35, 0, .1);
+    const k = easeInOut(lt / d);
+    look(V(lerp(.6, .4, k), lerp(2.5, 2.4, k), lerp(7.2, 6.2, k)), V(-.1, 2.1, -2.2), punch(lt, 50));
+  },
+  bedphone(lt, t, d) {
+    const { girl } = BED; bedEp2(t);
+    BED.phone.visible = true;
+    girl.userData.arms[0].rotation.set(-1.25, 0, -.35); girl.userData.arms[1].rotation.set(-.5, 0, 0);
+    const after = t - TL.marks.buzz;
+    const buzzOn = after > 0 && after < .8 && Math.sin(after * 60) > 0;
+    BED.scr.material.color.set(after > 0 ? 0xdfe8ff : 0x223355);
+    BED.phone.position.x = .05 + (buzzOn ? Math.sin(after * 120) * .03 : 0);
+    BED.phone.getWorldPosition(BED.phoneLight.position); BED.phoneLight.position.z += .3;
+    BED.phoneLight.intensity = after > 0 ? 1.4 : .15;
+    girl.userData.head.rotation.set(after > 0 ? .25 + smooth(0, .4, after) * .15 : .1, 0, 0);
+    setExpr(girl, after > .3 ? 'worried' : 'calm', t);
+    const k = easeInOut(lt / d);
+    const sh = after > 0 ? shake(t, .03 * Math.exp(-after * 3)) : V(0, 0, 0);
+    look(V(lerp(-.3, -.5, k), 2.6, lerp(1.6, 1.0, k)).add(sh), V(-.85, 1.8, -3.0), punch(lt, 46));
+  },
+  lookup(lt, t, d) {
+    const { girl } = BED; bedEp2(t);
+    BED.phone.visible = true; BED.scr.material.color.set(0xdfe8ff);
+    girl.userData.arms[0].rotation.set(-1.0, 0, -.35);
+    BED.phone.getWorldPosition(BED.phoneLight.position); BED.phoneLight.position.z += .3; BED.phoneLight.intensity = 1.2;
+    const k = smooth(.1, d, lt);
+    girl.userData.head.rotation.set(lerp(.3, -.25, k), lerp(0, .55, k), lerp(0, -.08, k));
+    setExpr(girl, k > .5 ? 'terror' : 'worried', t);
+    const z = easeInOut(lt / d);
+    look(V(lerp(-1.0, -1.1, z), 2.35, lerp(-.1, -.7, z)), V(-1.2, 2.2, -3.0), punch(lt, 44));
+  },
+  reveal(lt, t, d) {
+    const { girl, thing } = BED; bedEp2(t);
+    BED.phone.visible = true; BED.scr.material.color.set(0xdfe8ff);
+    girl.userData.arms[0].rotation.set(-1.0, 0, -.35);
+    BED.phone.getWorldPosition(BED.phoneLight.position); BED.phoneLight.position.z += .3; BED.phoneLight.intensity = 1.0;
+    girl.userData.head.rotation.set(-.25, .55, -.08); setExpr(girl, 'terror', t);
+    thing.userData.arms[1].rotation.set(-1.15, 0, .1);
+    // head turns from her toward us in creepy stutters
+    const raw = clamp((lt - .35) / (d - .9));
+    const steps = 4, stepK = Math.floor(raw * steps) / steps, frac = raw * steps % 1;
+    const turn = raw >= 1 ? 1 : stepK + smooth(0, .35, frac) / steps;
+    thing.userData.head.rotation.set(lerp(.35, .05, turn), turn * 2.26, lerp(.1, -.22, turn));
+    BED.faceLight.intensity = .2 + turn * 1.5;
+    const k = easeInOut(lt / d);
+    look(V(lerp(.5, .35, k), lerp(1.8, 1.95, k), lerp(4.8, 3.9, k)).add(shake(t, .006 + turn * .012)), V(.0, 2.45, -2.3), punch(lt, 50));
+  },
+  scare2(lt, t, d) {
+    const { thing } = BED; bedEp2(t);
+    thing.userData.arms[1].rotation.set(-1.15, 0, .1);
+    thing.userData.head.rotation.set(.05, 2.26, -.22 + Math.sin(lt * 40) * .05);
+    const lunge = easeOut(lt / .25);
+    thing.userData.head.scale.setScalar(1 + lunge * .15);
+    thing.updateMatrixWorld(true);
+    const head = thing.userData.head;
+    const face = head.localToWorld(V(0, .72, .5));
+    const fwd = head.localToWorld(V(0, .72, 1.5)).sub(face).normalize();
+    BED.faceLight.intensity = 2.2 * (Math.sin(lt * 50) > -.3 ? 1 : .3);
+    BED.faceLight.position.copy(face).addScaledVector(fwd, .9);
+    const dist = lerp(2.4, 1.3, lunge);
+    look(face.clone().addScaledVector(fwd, dist).add(shake(t, .1 * Math.exp(-lt * 1.5))), face, 50 + Math.sin(lt * 25) * 2);
+  },
+  endcard2(lt, t, d) {
+    const { girl, thing } = BED; bedEp2(t);
+    thing.visible = false;   // keep it out of the close-up
+    BED.phone.visible = true; BED.scr.material.color.set(0xdfe8ff);
+    girl.userData.arms[0].rotation.set(-.9, 0, -.4); girl.userData.arms[1].rotation.set(-.7, 0, .3);
+    BED.phone.getWorldPosition(BED.phoneLight.position); BED.phoneLight.position.z += .5; BED.phoneLight.intensity = 1.4;
+    girl.userData.head.rotation.set(-.08, 0, Math.sin(t * 30) * .006);
+    setExpr(girl, 'terror', t);
+    girl.userData.refl.material.opacity = 1;
+    girl.updateMatrixWorld(true);
+    const k = easeOut(lt / d);
+    const head = girl.userData.head.localToWorld(V(0, 1.0, 0));
+    look(V(head.x + .14, head.y - .05, head.z + lerp(3.0, 2.6, k)), V(head.x, head.y - .08, head.z), punch(lt, 40));
+    ann = { p: girl.userData.eyes[1].localToWorld(V(0, 0, .1)), r: 120, t0: TL.marks.endcard + .35, arrow: 'bl2' };
+  },
 };
+
+// shared state for every episode-2 bedroom shot
+function bedEp2(t) {
+  drawClock(BED.clockTex, 9 * 60 + 47);
+  BED.hinge.rotation.y = 0; BED.shadowThing.visible = false;
+  BED.thing.visible = true; BED.thing.userData.head.scale.setScalar(1);
+  BED.girl.userData.arms[0].rotation.set(-.5, 0, 0);
+  const on = t < TL.marks.lampoff;
+  BED.lamp.intensity = on ? 7 : 0; BED.warm.intensity = on ? 25 : 0;
+  BED.shade.material.emissiveIntensity = on ? .6 : 0;
+  BED.front.intensity = on ? 45 : 32;
+}
 
 function kitchenCommon(t, scare = false, dim = 1) {
   const th = KI.thing;
@@ -650,15 +757,23 @@ function updateOverlay(t, shot) {
 window.setup = async (timeline) => {
   TL = timeline;
   BED = makeBedroom(); ST = makeStairs(); PH = makePhoneShot(); KI = makeKitchen();
+  const T = TL.text;
+  $('title').innerHTML = `<div class="l1">${T.title[0]}</div><div class="l2 red">${T.title[1]}</div>`;
+  $('endtop').innerHTML = `<div class="l1">${T.endtop[0]}</div><div class="l2 red">${T.endtop[1]}</div>`;
+  $('endbot').innerHTML = `<div class="l1">${T.endbot[0]}</div><div class="l2 red">${T.endbot[1]}</div><div class="l3">${T.endbot[2]}</div>`;
   await document.fonts.load('900 80px Mont'); await document.fonts.load('800 80px Mont'); await document.fonts.ready;
   return true;
 };
 
 window.renderFrame = (t, frameIndex = Math.round(t * 30)) => {
   ann = null;
+  // per-frame defaults (episode-1 bedroom look)
+  BED.thing.visible = false; BED.phone.visible = false; BED.phoneLight.intensity = 0; BED.faceLight.intensity = 0;
+  BED.lamp.intensity = 7; BED.warm.intensity = 25; BED.front.intensity = 45; BED.shade.material.emissiveIntensity = .6;
   const sh = shotAt(t), lt = t - sh.t0, d = sh.t1 - sh.t0;
   SHOTS[sh.name](lt, t, d);
-  const scene = { bedroom: BED, door: BED, doorgap: BED, stairs: ST, phone: PH, kitchen: KI, turn: KI, scare: KI, endcard: ST }[sh.name].scene;
+  const scene = { bedroom: BED, door: BED, doorgap: BED, stairs: ST, phone: PH, kitchen: KI, turn: KI, scare: KI, endcard: ST,
+    nursery: BED, bedphone: BED, lookup: BED, reveal: BED, scare2: BED, endcard2: BED }[sh.name].scene;
   renderer.render(scene, camera);
   updateOverlay(t, sh.name);
   drawGrain(frameIndex);

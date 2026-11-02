@@ -1,14 +1,15 @@
 // Frame-by-frame capture of scene.html with headless Chromium.
-//   node render.js                 -> build/frames/f00000.jpg ... (all frames)
-//   node render.js --stills 1,5,9  -> build/stills/t1.00.png ... (preview frames)
-//   node render.js --from 10 --to 12
+//   node render.js --ep ep2                 -> build/ep2/frames/f00000.jpg ... (all frames)
+//   node render.js --ep ep2 --stills 1,5,9  -> build/ep2/stills/t1.00.png ... (preview frames)
+//   node render.js --ep ep2 --from 10 --to 12
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 
 const ROOT = __dirname;
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
-const TL = JSON.parse(fs.readFileSync(path.join(ROOT, 'build/timeline.json'), 'utf8'));
+const EP = opt('ep', 'ep2'), B = path.join(ROOT, 'build', EP);
+const TL = JSON.parse(fs.readFileSync(path.join(B, 'timeline.json'), 'utf8'));
 const FPS = TL.fps;
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.woff2': 'font/woff2', '.woff': 'font/woff' };
@@ -33,7 +34,7 @@ const server = http.createServer((req, res) => {
 
   const stills = opt('stills');
   if (stills) {
-    const dir = path.join(ROOT, 'build/stills'); fs.mkdirSync(dir, { recursive: true });
+    const dir = path.join(B, 'stills'); fs.mkdirSync(dir, { recursive: true });
     for (const s of stills.split(',').map(Number)) {
       const shot = await page.evaluate(t => window.renderFrame(t), s);
       const f = path.join(dir, `t${s.toFixed(2)}.png`);
@@ -41,7 +42,7 @@ const server = http.createServer((req, res) => {
       console.log(f, shot);
     }
   } else {
-    const dir = path.join(ROOT, 'build/frames'); fs.mkdirSync(dir, { recursive: true });
+    const dir = path.join(B, 'frames'); fs.mkdirSync(dir, { recursive: true });
     const n = Math.round(TL.total * FPS);
     const from = Math.round(Number(opt('from', 0)) * FPS), to = Math.min(n, Math.round(Number(opt('to', TL.total)) * FPS));
     const t0 = Date.now();

@@ -3,12 +3,14 @@
 Everything except the voices is synthesized here with numpy, so the
 project has no third-party audio assets.
 """
-import json, os, subprocess
+import json, os, subprocess, sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+EP = sys.argv[1] if len(sys.argv) > 1 else "ep2"
+B = os.path.join(HERE, "build", EP)
 SR = 48000
-TL = json.load(open(os.path.join(HERE, "build/timeline.json")))
+TL = json.load(open(os.path.join(B, "timeline.json")))
 M, total = TL["marks"], TL["total"]
 N = int(total * SR) + SR
 out = np.zeros((N, 2))
@@ -71,14 +73,13 @@ def load(path):
 
 # ------------------------------------------------------------- voices
 for l in TL["lines"]:
-    v = load(os.path.join(HERE, "build/vo", l["id"] + ".mp3"))
-    if l["id"] == "m1":        # heard from downstairs: muffled + roomy
+    v = load(os.path.join(B, "vo", l["id"] + ".mp3"))
+    if l.get("fx") == "distant":     # heard from downstairs: muffled + roomy
         v = reverb(lp(v, 1800), 1.8, 0.55, 2000)
         place(v, l["start"], 0.9, 0.25)
-    elif l["id"] == "m2":      # whisper right in front of you, doubled an octave-ish lower
-        low = load(os.path.join(HERE, "build/vo", "m2.mp3"))
-        idx = np.arange(0, len(low), 0.8)
-        low = np.interp(idx, np.arange(len(low)), low)
+    elif l.get("fx") == "whisper":   # right next to you, doubled lower
+        idx = np.arange(0, len(v), 0.8)
+        low = np.interp(idx, np.arange(len(v)), v)
         v2 = np.zeros(max(len(v), len(low)))
         v2[:len(v)] += v
         v2[:len(low)] += low * 0.55
@@ -108,12 +109,13 @@ def tick():
     return hp(rs.standard_normal(int(d * SR)), 2500) * env(d, 0.0005, 0.006)
 
 
-for k in np.arange(0.2, shot["door"], 1.0):
+for k in np.arange(0.2, TL["shots"][1]["t"], 1.0):
     place(tick(), k, 0.35, -0.3)
 # soft chime when the clock hits seven
 c = tt(2.5)
 chime = (np.sin(2 * np.pi * 784 * c) + 0.5 * np.sin(2 * np.pi * 1176 * c) + 0.3 * np.sin(2 * np.pi * 1568 * c)) * env(2.5, 0.003, 0.6)
-place(chime, M["seven"], 0.10, -0.3)
+if "seven" in M:
+    place(chime, M["seven"], 0.10, -0.3)
 
 
 def whoosh(d=0.6, peak=0.65):
@@ -137,7 +139,8 @@ def creak(d=1.3):
     return hp(body, 400) * np.sin(np.pi * c / d)
 
 
-place(creak(), shot["door"] + 0.1, 0.5, 0.4)
+if "door" in shot:
+    place(creak(), shot["door"] + 0.1, 0.5, 0.4)
 
 
 def thump(f=70, d=0.25, click=True):
@@ -149,9 +152,15 @@ def thump(f=70, d=0.25, click=True):
 
 
 # footsteps on the stairs (match the walk in the render)
-walk_end = M["buzz"] - 0.1
-for k in (1, 2, 3):
-    place(thump(90, 0.3), shot["stairs"] + (walk_end - shot["stairs"]) * k / 3 - 0.08, 0.5)
+if "stairs" in shot:
+    walk_end = M["buzz"] - 0.1
+    for k in (1, 2, 3):
+        place(thump(90, 0.3), shot["stairs"] + (walk_end - shot["stairs"]) * k / 3 - 0.08, 0.5)
+
+# lamp switched off: click + the room tone drops
+if "lampoff" in M:
+    c = tt(0.08)
+    place(hp(rs.standard_normal(len(c)), 1800) * env(0.08, 0.0005, 0.008) + thump(120, 0.08, False) * 0.5, M["lampoff"], 0.6)
 
 # phone buzz x2 + notification ping
 for k in (0, 0.55):
@@ -166,10 +175,11 @@ place(ping, M["notify"], 0.16)
 place(thump(55, 0.6, False) + lp(rs.standard_normal(int(0.6 * SR)), 800) * env(0.6, 0.001, 0.08), M["circle"], 0.5)
 
 # kitchen: stove sizzle + heartbeat that speeds up
-k0, k1 = shot["kitchen"], M["scare"] - 0.55
-sz = hp(rs.standard_normal(int((k1 - k0) * SR)), 3000) * 0.04
-sz *= 0.7 + 0.3 * np.sin(tt(k1 - k0) * 9) * np.sin(tt(k1 - k0) * 2.3)
-place(sz, k0, 0.5, 0.2)
+k0, k1 = M["tension"], M["scare"] - 0.55
+if "kitchen" in shot:
+    sz = hp(rs.standard_normal(int((k1 - k0) * SR)), 3000) * 0.04
+    sz *= 0.7 + 0.3 * np.sin(tt(k1 - k0) * 9) * np.sin(tt(k1 - k0) * 2.3)
+    place(sz, k0, 0.5, 0.2)
 beat_t = k0
 while beat_t < k1:
     place(thump(48, 0.22, False), beat_t, 0.8)
@@ -203,7 +213,7 @@ out /= np.max(np.abs(out)) / 1.1
 out = np.tanh(out * 1.15) * 0.92          # soft limiter
 pcm = (out * 32767).astype(np.int16)
 import wave
-with wave.open(os.path.join(HERE, "build/mix.wav"), "wb") as w:
+with wave.open(os.path.join(B, "mix.wav"), "wb") as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes(pcm.tobytes())
 print("mix.wav", len(out) / SR, "s")
